@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelByte - Contactanos</title>
+    <script src="src/javascript.js" type="module"></script>
+    <link rel="stylesheet" href="src/estilos.css">
+</head>
+<body class="bd">
+    <header class="navbar">
+        <div class="logo">
+            <a href="index.html"><span>Pixel</span>Byte</a>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="productos.html">Productos</a></li>
+                <li><a href="contacto.html" class="active">Contactanos</a></li>
+                <li><a href="blogs.html">Noticias</a></li>
+                <li><a href="nosotros.html">Nosotros</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <a href="carrito.html" class="cart-btn">Carrito (<span id="cart-count">0</span>)</a>
+            <span id="user-nav-container">
+                <a href="login.html" class="btn btn-outline active">Iniciar Sesión</a>
+            </span>
+        </div>
+    </header>
+    <main class="auth-container">
+        <div class="auth-card contact-card">
+            <h2>CONTACTANOS</h2>
+            <p class="subtitle" style="text-align: center; color: #aaa; margin-bottom: 20px;">
+                ¿Tienes dudas sobre algún componente? Escríbenos y te responderemos a la brevedad.
+            </p>
+
+            <!-- Mensaje de Confirmación al enviar -->
+            <div id="contactSuccess" class="alert success hidden" style="background-color: rgba(0, 255, 136, 0.15); border: 1px solid #00ff88; color: #00ff88; padding: 12px; border-radius: 6px; margin-bottom: 20px; text-align: center;">
+                ¡Mensaje enviado con éxito! Nos pondremos en contacto contigo pronto.
+            </div>
+
+            <form id="contactForm" novalidate>
+                <!-- Nombre Completo -->
+                <div class="form-group">
+                    <label for="contactName">Nombre Completo *</label>
+                    <input 
+                        type="text" 
+                        id="contactName" 
+                        placeholder="Ej: Cristóbal Pérez" 
+                        maxlength="100" 
+                        required
+                    >
+                    <small id="contactNameError" class="error-msg"></small>
+                </div>
+
+                <!-- Correo Electrónico -->
+                <div class="form-group">
+                    <label for="contactEmail">Correo Electrónico *</label>
+                    <input 
+                        type="email" 
+                        id="contactEmail" 
+                        placeholder="ejemplo@duoc.cl" 
+                        maxlength="100" 
+                        required
+                    >
+                    <small id="contactEmailError" class="error-msg"></small>
+                </div>
+
+                <!-- Comentario / Mensaje -->
+                <div class="form-group">
+                    <label for="contactComment">Comentario / Mensaje *</label>
+                    <textarea 
+                        id="contactComment" 
+                        rows="5" 
+                        placeholder="Escribe tu mensaje aquí..." 
+                        maxlength="500" 
+                        required
+                        style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; background-color: #2a2a2a; color: #fff; font-family: inherit; resize: vertical;"
+                    ></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                        <small id="contactCommentError" class="error-msg"></small>
+                        <small style="color: #777;"><span id="charCount">0</span>/500</small>
+                    </div>
+                </div>
+                <div id="EnviarAlert" class="alert error hidden"></div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Enviar Mensaje</button>
+            </form>
+        </div>
+    </main>
+    <footer class="footer">
+       <div class="footer-container">
+           <div class="footer-brand">
+               <h3><span>Pixel</span>Byte</h3>
+               <p>Tu tienda de confianza para armar tu PC Gaming.</p>
+           </div>
+           <div class="footer-newsletter">
+               <h4>Mantente en contacto</h4>
+               <p>Suscríbete para recibir ofertas exclusivas.</p>
+               <form id="newsletterForm" class="newsletter-form">
+                   <input type="email" placeholder="Ingresa tu correo" required>
+                   <button type="submit" class="btn btn-primary">Suscribirse</button>
+               </form>
+           </div>
+       </div>
+       <div class="footer-bottom">
+           <p>&copy; 2026 PixelByte. Todos los derechos reservados.</p>
+       </div>
+   </footer>
+
+</body>
+</html>

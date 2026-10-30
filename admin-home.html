@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelByte - Panel de Administración</title>
+    <script src="src/javascript.js" type="module"></script>
+    <link rel="stylesheet" href="src/estilos.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <a href="index.html"><span>Pixel</span>Byte</a>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="productos.html">Productos</a></li>
+                <li><a href="contacto.html">Contáctanos</a></li>
+                <li><a href="blogs.html">Noticias</a></li>
+                <li><a href="nosotros.html">Nosotros</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <a href="carrito.html" class="cart-btn">Carrito (<span id="cart-count">0</span>)</a>
+            <span id="user-nav-container">
+                <a href="login.html" class="btn btn-outline active">Iniciar Sesión</a>
+            </span>
+        </div>
+    </header>
+
+    <main class="admin-layout">
+        <!-- Menú Vertical (Sidebar) -->
+        <aside class="admin-sidebar">
+            <h2>Admin Panel</h2>
+            <nav class="admin-menu">
+                <button class="menu-btn active" data-target="section-productos">Productos</button>
+                <button class="menu-btn" data-target="section-usuarios">Usuarios</button>
+                <button class="menu-btn" data-target="section-mensajes">Mensajes</button>
+            </nav>
+            <button id="adminLogoutBtn" class="btn btn-outline btn-logout">Cerrar Sesión</button>
+        </aside>
+
+        <section class="admin-content">
+            <!-- MANTENEDOR DE PRODUCTOS -->
+            <div id="section-productos" class="admin-tab active">
+                <h1>Mantenedor de Productos</h1>
+                <div class="admin-section">
+                    <h2 id="form-title">Agregar Nuevo Producto</h2>
+                    <form id="productForm" class="admin-form">
+                        <input type="hidden" id="prodEditId">
+                        
+                        <div class="form-group">
+                            <label for="prodCode">Código del Producto (Min 3 carát.)</label>
+                            <input type="text" id="prodCode" minlength="3" required placeholder="Ej: PROD-100">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prodName">Nombre del Producto (Máx 100)</label>
+                            <input type="text" id="prodName" maxlength="100" required placeholder="Ej: Tarjeta RTX 4080">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prodDesc">Descripción (Opcional, Máx 500)</label>
+                            <input id="prodDesc" step="0.01" maxlength="500" min="0" required placeholder="Detalles técnicos...">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prodPrice">Precio ($ - 0 para Gratis)</label>
+                            <input type="number" id="prodPrice" step="0.01" min="0" required placeholder="Ej: 850000">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prodStock">Stock Inicial</label>
+                            <input type="number" id="prodStock" step="1" min="0" required placeholder="Ej: 15">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prodStockCritico">Stock Crítico (Alerta opcional)</label>
+                            <input type="number" id="prodStockCritico" step="1" min="0" placeholder="Ej: 3">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prodCategory">Categoría</label>
+                            <select id="prodCategory" required>
+                                <option value="">Seleccione Categoría</option>
+                                <option value="Tarjetas de Video">Tarjetas de Video</option>
+                                <option value="Periféricos">Periféricos</option>
+                                <option value="Audio">Audio</option>
+                                <option value="Almacenamiento">Almacenamiento</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prodImg">URL de la Imagen (Opcional)</label>
+                            <input type="url" id="prodImg" placeholder="https://...">
+                        </div>
+
+                        <div class="admin-form-actions">
+                            <button type="submit" id="btnSaveProd" class="btn btn-primary">Guardar Producto</button>
+                            <button type="button" id="btnCancelEdit" class="btn btn-outline hidden">Cancelar Edición</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="admin-section">
+                    <h2>Inventario de Productos</h2>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Imagen</th>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-products-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MANTENEDOR DE USUARIOS -->
+            <div id="section-usuarios" class="admin-tab hidden">
+                <h1>Mantenedor de Usuarios</h1>
+                
+                <div class="admin-section">
+                    <h2>Crear Nuevo Usuario</h2>
+                    <form id="userAdminForm" class="admin-form">
+                        <div class="form-group">
+                            <label for="userAdminRun">RUN (sin puntos ni guion):</label>
+                            <input type="text" id="userAdminRun" placeholder="Ej: 19011022K" minlength="7" maxlength="9" required>
+                            <small id="userAdminRunError" class="error-msg"></small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userAdminNombre">Nombre (Máx 50):</label>
+                            <input type="text" id="userAdminNombre" maxlength="50" placeholder="Nombre" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userAdminApellidos">Apellidos (Máx 100):</label>
+                            <input type="text" id="userAdminApellidos" maxlength="100" placeholder="Apellidos" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userAdminEmail">Correo Electrónico (Máx 100):</label>
+                            <input type="email" id="userAdminEmail" maxlength="100" placeholder="correo@duoc.cl" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userAdminPassword">Contraseña (4 a 10 caracteres):</label>
+                            <input type="password" id="userAdminPassword" minlength="4" maxlength="10" placeholder="Contraseña" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userAdminFechaNac">Fecha de Nacimiento (Opcional):</label>
+                            <input type="date" id="userAdminFechaNac">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userAdminRole">Perfil / Tipo de Usuario:</label>
+                            <select id="userAdminRole" required>
+                                <option value="Cliente">Cliente</option>
+                                <option value="Vendedor">Vendedor</option>
+                                <option value="Administrador">Administrador</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userAdminRegion">Región:</label>
+                            <select id="userAdminRegion" required>
+                                <option value="">Seleccione una región</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userAdminComuna">Comuna:</label>
+                            <select id="userAdminComuna" required disabled>
+                                <option value="">Seleccione una comuna</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="userAdminDireccion">Dirección (Máx 300):</label>
+                            <input type="text" id="userAdminDireccion" maxlength="300" placeholder="Calle y número" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Registrar Usuario</button>
+                    </form>
+                </div>
+
+                <div class="admin-section">
+                    <h2>Usuarios Registrados</h2>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>RUN</th>
+                                    <th>Nombre Completo</th>
+                                    <th>Correo</th>
+                                    <th>Rol</th>
+                                    <th>Ubicación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MENSAJES -->
+            <div id="section-mensajes" class="admin-tab hidden">
+                <h1>Mensajes Recibidos</h1>
+                <div class="admin-section">
+                    <div id="admin-messages-list" class="messages-grid"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <h3><span>Pixel</span>Byte</h3>
+                <p>Tu tienda de confianza para armar tu PC Gaming.</p>
+            </div>
+            <div class="footer-newsletter">
+                <h4>Mantente en contacto</h4>
+                <p>Suscríbete para recibir ofertas exclusivas.</p>
+                <form id="newsletterForm" class="newsletter-form">
+                    <input type="email" placeholder="Ingresa tu correo" required>
+                    <button type="submit" class="btn btn-primary">Suscribirse</button>
+                </form>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 PixelByte. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelByte - Registro</title>
+    <script src="src/javascript.js" type="module"></script>
+    <link rel="stylesheet" href="src/estilos.css">
+</head>
+<body class="bd">
+    <header class="navbar">
+        <div class="logo">
+            <a href="index.html"><span>Pixel</span>Byte</a>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="productos.html">Productos</a></li>
+                <li><a href="contacto.html">Contactanos</a></li>
+                <li><a href="blogs.html">Noticias</a></li>
+                <li><a href="nosotros.html">Nosotros</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <a href="carrito.html" class="cart-btn">Carrito (<span id="cart-count">0</span>)</a>
+            <span id="user-nav-container">
+                <a href="login.html" class="btn btn-outline active">Iniciar Sesión</a>
+            </span>
+        </div>
+    </header>
+    <main class="auth-container">
+        <div class="auth-card">
+            <h2>Registrate</h2>
+            <form id="regForm" class="auth-form">
+    <h2>Crear Cuenta de Cliente</h2>
+
+    <!-- RUN -->
+    <div class="form-group">
+        <label for="runreg">RUN (sin puntos ni guion):</label>
+        <input type="text" id="runreg" placeholder="Ej: 19011022K" minlength="7" maxlength="9" required>
+        <small id="runregError" class="error-msg"></small>
+    </div>
+
+    <!-- Nombre -->
+    <div class="form-group">
+        <label for="nombrereg">Nombre:</label>
+        <input type="text" id="nombrereg" placeholder="Tu nombre" maxlength="50" required>
+        <small id="nombreregError" class="error-msg"></small>
+    </div>
+
+    <!-- Apellidos -->
+    <div class="form-group">
+        <label for="apellidosreg">Apellidos:</label>
+        <input type="text" id="apellidosreg" placeholder="Tus apellidos" maxlength="100" required>
+        <small id="apellidosregError" class="error-msg"></small>
+    </div>
+
+    <!-- Correo -->
+    <div class="form-group">
+        <label for="emailreg">Correo electrónico:</label>
+        <input type="email" id="emailreg" placeholder="ejemplo@gmail.com" maxlength="100" required>
+        <small id="emailregError" class="error-msg"></small>
+    </div>
+
+    <!-- Confirmación Correo -->
+    <div class="form-group">
+        <label for="emailreg2">Confirmar Correo electrónico:</label>
+        <input type="email" id="emailreg2" placeholder="Repite tu correo" maxlength="100" required>
+        <small id="emailreg2Error" class="error-msg"></small>
+    </div>
+
+    <!-- Contraseña -->
+    <div class="form-group">
+        <label for="passwordreg">Contraseña:</label>
+        <input type="password" id="passwordreg" placeholder="4 a 10 caracteres" minlength="4" maxlength="10" required>
+        <small id="passregError" class="error-msg"></small>
+    </div>
+
+    <!-- Confirmar Contraseña -->
+    <div class="form-group">
+        <label for="passwordreg2">Confirmar Contraseña:</label>
+        <input type="password" id="passwordreg2" placeholder="Repite tu contraseña" minlength="4" maxlength="10" required>
+        <small id="passreg2Error" class="error-msg"></small>
+    </div>
+
+    <!-- Fecha Nacimiento (Opcional) -->
+    <div class="form-group">
+        <label for="fechanacreg">Fecha de Nacimiento (Opcional):</label>
+        <input type="date" id="fechanacreg">
+    </div>
+
+    <!-- Región y Comuna -->
+    <div class="form-group">
+        <label for="regionreg">Región:</label>
+        <select id="regionreg" required>
+            <option value="">Seleccione una región</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="comunareg">Comuna:</label>
+        <select id="comunareg" required disabled>
+            <option value="">Seleccione una comuna</option>
+        </select>
+    </div>
+
+    <!-- Dirección -->
+    <div class="form-group">
+        <label for="direccionreg">Dirección:</label>
+        <input type="text" id="direccionreg" placeholder="Calle, número, depto..." maxlength="300" required>
+    </div>
+
+    <div id="regAlert" class="alert error hidden"></div>
+
+    <button type="submit" class="btn btn-primary btn-block">Registrarse</button>
+</form>
+            <div class="auth-footer">
+                <p>¿Ya tienes cuenta? <a href="login.html">Inciar Sesion</a></p>
+            </div>
+        </div>
+    </main>
+    <footer class="footer">
+       <div class="footer-container">
+           <div class="footer-brand">
+               <h3><span>Pixel</span>Byte</h3>
+               <p>Tu tienda de confianza para armar tu PC Gaming.</p>
+           </div>
+           <div class="footer-newsletter">
+               <h4>Mantente en contacto</h4>
+               <p>Suscríbete para recibir ofertas exclusivas.</p>
+               <form id="newsletterForm" class="newsletter-form">
+                   <input type="email" placeholder="Ingresa tu correo" required>
+                   <button type="submit" class="btn btn-primary">Suscribirse</button>
+               </form>
+           </div>
+       </div>
+       <div class="footer-bottom">
+           <p>&copy; 2026 PixelByte. Todos los derechos reservados.</p>
+       </div>
+   </footer>
+</body>
+</html>

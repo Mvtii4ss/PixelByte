@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelByte - Carrito</title>
+    <script src="src/javascript.js" type="module"></script>
+    <link rel="stylesheet" href="src/estilos.css">
+</head>
+<body>
+    <header class="navbar">
+       <div class="logo">
+           <a href="index.html"><span>Pixel</span>Byte</a>
+       </div>
+       <nav>
+           <ul>
+               <li><a href="index.html">Home</a></li>
+               <li><a href="productos.html">Productos</a></li>
+               <li><a href="contacto.html">Contactanos</a></li>
+               <li><a href="blogs.html">Noticias</a></li>
+               <li><a href="nosotros.html">Nosotros</a></li>
+           </ul>
+       </nav>
+       <div class="header-actions">
+           <a href="carrito.html" class="cart-btn">Carrito (<span id="cart-count">0</span>)</a>
+           <span id="user-nav-container">
+               <a href="login.html" class="btn btn-outline active">Iniciar Sesión</a>
+           </span>
+       </div>
+   </header>  
+
+   <main style="max-width: 900px; margin: 40px auto; padding: 0 70px;">
+        <h2>Tu carrito de compras</h2>
+        <div id="cart-items-container"></div>  
+        <div class="cart-summary">
+            <h3>Total: <span id="cart-total">$0</span></h3>
+            <div class="cart-actions">
+                <button id="clear-cart-btn" class="btn btn-outline">Vaciar Carrito</button>
+                <button id="checkout_btn" class="btn btn-primary">Proceder al Pago</button>
+            </div>
+        </div>
+   </main>
+
+   <footer class="footer">
+       <div class="footer-container">
+           <div class="footer-brand">
+               <h3><span>Pixel</span>Byte</h3>
+               <p>Tu tienda de confianza para armar tu PC Gaming.</p>
+           </div>
+           <div class="footer-newsletter">
+               <h4>Mantente en contacto</h4>
+               <p>Suscríbete para recibir ofertas exclusivas.</p>
+               <form id="newsletterForm" class="newsletter-form">
+                   <input type="email" placeholder="Ingresa tu correo" required>
+                   <button type="submit" class="btn btn-primary">Suscribirse</button>
+               </form>
+           </div>
+       </div>
+       <div class="footer-bottom">
+           <p>&copy; 2026 PixelByte. Todos los derechos reservados.</p>
+       </div>
+   </footer>
+</body>
+</html>

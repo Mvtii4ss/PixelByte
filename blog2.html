@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelByte - Mantenimiento de Tarjetas de Video</title>
+    <script src="src/javascript.js" type="module"></script>
+    <link rel="stylesheet" href="src/estilos.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <a href="index.html"><span>Pixel</span>Byte</a>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="productos.html">Productos</a></li>
+                <li><a href="contacto.html">Contáctanos</a></li>
+                <li><a href="blogs.html" class="active">Noticias</a></li>
+                <li><a href="nosotros.html">Nosotros</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <a href="carrito.html" class="cart-btn">Carrito (<span id="cart-count">0</span>)</a>
+            <span id="user-nav-container">
+                <a href="login.html" class="btn btn-outline">Iniciar Sesión</a>
+            </span>
+        </div>
+    </header>  
+
+    <main class="blog-detail-container">
+        <a href="blogs.html" class="back-link">← Volver a Noticias</a>
+
+        <article class="blog-article">
+            <header class="blog-article-header">
+                <span class="news-tag">Mantenimiento Tech</span>
+                <h1>Mantenimiento Preventivo: Extiende la Vida Útil de tu GPU</h1>
+                <div class="news-meta">
+                    <span>📅 01 de Septiembre, 2026</span>
+                    <span>✍️ Escrito por Lab PixelByte</span>
+                </div>
+            </header>
+
+            <div class="blog-main-image">
+                <img src="https://imgs.search.brave.com/2WeGWvtq7kY25FFuoU7gtPOQHih7wYc_fivgAzzHGYc/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9jZG4u/bW9zLmNtcy5mdXR1/cmVjZG4ubmV0L2Vy/dUhyd0FhejVWZTI4/YUFoNlc4YkMtMTIw/MC04MC5qcGc" alt="Mantenimiento GPU Hardware">
+            </div>
+
+            <section class="blog-content">
+                <p class="lead-text">Las tarjetas gráficas modernas generan una cantidad considerable de calor bajo cargas exigentes. Un mantenimiento adecuado no solo reduce el ruido de los ventiladores, sino que evita la degradación prematura del silicio.</p>
+
+                <h2>Limpieza de polvo y flujo de aire</h2>
+                <p>El polvo acumulado en el disipador de aluminio actúa como un aislante térmico, forzando a los ventiladores a girar a máxima velocidad. Recomendamos realizar una limpieza superficial con aire comprimido cada 3 o 4 meses, manteniendo fijas las aspas del ventilador para evitar daños en los rodamientos.</p>
+
+                <h2>Cambio de pasta térmica y Thermal Pads</h2>
+                <p>Pasados los 2 años de uso intenso, la pasta térmica de fábrica pierde su viscosidad y capacidad de transferencia. Reemplazarla por una pasta de alta conductividad térmica (mínimo 8.5 W/mK) puede reducir las temperaturas hasta en 10°C en carga máxima.</p>
+
+                <h2>Monitoreo de temperaturas (Hotspot)</h2>
+                <p>Utiliza herramientas de software para controlar las lecturas. Es normal que el núcleo opere entre 65°C y 75°C bajo juego, pero si la temperatura del punto más caliente (Hotspot) supera los 95°C, es señal clara de que el sistema de refrigeración necesita atención inmediata.</p>
+
+                <div class="blog-cta-box">
+                    <h3>¿Prefieres que un profesional revise tu equipo?</h3>
+                    <p>En nuestro taller técnico realizamos mantenciones preventivas y optimización de thermal pads para todas las marcas.</p>
+                    <a href="contacto.html" class="btn btn-primary">Agendar Mantención</a>
+                </div>
+            </section>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <h3><span>Pixel</span>Byte</h3>
+                <p>Tu tienda de confianza para armar tu PC Gaming.</p>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 PixelByte. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
