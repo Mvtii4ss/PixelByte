@@ -1,11 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import {
-    obtenerUsuarios,
-    guardarUsuarios,
-    inicializarUsuarios
-} from '../services/usuarios.js';
+import { registrarUsuario } from '../services/usuarios.js';
 
 import {
     validarCampoRegistro,
@@ -57,7 +53,7 @@ function Registro() {
 
         setDatos(nuevosDatos);
 
-        const usuarios = obtenerUsuarios();
+        const usuarios = [];
 
         setErrores(anteriores => {
             const actualizados = { ...anteriores };
@@ -86,12 +82,12 @@ function Registro() {
         });
     }   
 
-    function registrar(evento) {
+    async function registrar(evento) {
         evento.preventDefault();
         
-        inicializarUsuarios();
+
         
-        const usuarios = obtenerUsuarios();
+        const usuarios = [];
         const nuevosErrores = validarRegistro(datos, usuarios);
         
         if (Object.keys(nuevosErrores).length > 0) {
@@ -121,7 +117,7 @@ function Registro() {
             role: 'Cliente'
         };
     
-        guardarUsuarios([...usuarios, nuevoUsuario]);
+        try { await registrarUsuario(nuevoUsuario); } catch(e) {setErrores({general:e.message});return;}
     
         alert('¡Cuenta creada correctamente! Ya puedes iniciar sesión.');
         navigate('/login');
@@ -144,6 +140,7 @@ function Registro() {
                 <h2>Crear cuenta de cliente</h2>
 
                 <form onSubmit={registrar} noValidate>
+                    {errores.general && <div className="alert alert-danger" role="alert">{errores.general}</div>}
                     {campos.map(campo => (
                         <div className="form-group" key={campo.name}>
                             <label htmlFor={campo.name}>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getProducts } from '../services/productos.js';
+import { getProduct } from '../services/productos.js';
 import { agregarAlCarrito } from '../services/carrito.js';
 import { obtenerPrecioFinal } from './Productos.jsx';
 
@@ -8,14 +8,14 @@ function DetalleProducto() {
     const { id } = useParams();
     const [mensaje, setMensaje] = useState('');
 
-    const producto = getProducts().find(
-        p => String(p.id) === String(id)
-    );
+    const [producto,setProducto]=useState(null);
+    const [error,setError]=useState('');
+    useEffect(()=>{let active=true;setProducto(null);setError('');getProduct(id).then(p=>{if(active)setProducto(p);}).catch(e=>{if(active)setError(e.message);});return ()=>{active=false;};},[id]);
 
     if (!producto) {
         return (
             <main className="container my-5">
-                <h2>Producto no encontrado</h2>
+                <h2>{error || 'Cargando producto...'}</h2>
                 <Link to="/productos" className="btn btn-primary">
                     Volver a productos
                 </Link>
@@ -71,7 +71,7 @@ function DetalleProducto() {
 
                     <button
                         className="btn btn-primary btn-lg"
-                        onClick={handleAgregar}
+                        onClick={handleAgregar} disabled={producto.stock===0}
                     >
                         Añadir al carrito 🛒
                     </button>

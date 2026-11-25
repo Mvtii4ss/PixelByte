@@ -8,6 +8,7 @@ import jakarta.validation.constraints.*;
 public class Producto {
 
     @Id
+    @NotBlank @Size(min=3,max=30) @Pattern(regexp="[A-Za-z0-9_-]+")
     @Column(length = 30)
     private String id;
 
@@ -21,11 +22,11 @@ public class Producto {
     private String descripcion;
 
     @NotNull
-    @DecimalMin("0.0")
+    @Min(0)
     @Column(nullable = false)
     private Integer precio;
 
-    @Min(0)
+    @NotNull @Min(0)
     @Column(nullable = false)
     private Integer stock = 0;
 
@@ -33,9 +34,11 @@ public class Producto {
     @Column(name = "stock_critico")
     private Integer stockCritico = 0;
 
+    @Size(max=80)
     @Column(length = 80)
     private String categoria;
 
+    @Size(max=1000)
     @Column(name = "imagen_url", length = 1000)
     private String imagenUrl;
 

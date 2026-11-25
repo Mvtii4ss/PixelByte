@@ -5,7 +5,7 @@ import Productos from './components/Productos.jsx';
 import Carrito from './components/Carrito.jsx';
 import Checkout from './components/Checkout.jsx';
 import Login from './components/Login.jsx';
-import { obtenerSesion } from './services/sesion.js';
+import { obtenerSesion, restaurarSesion } from './services/sesion.js';
 import Admin from './components/Admin.jsx';
 import Registro from './components/Registro.jsx';
 import Contacto from './components/Contacto.jsx';
@@ -43,7 +43,7 @@ function Pagina({ titulo }) {
     );
 }
 
-function RutaAdmin() {
+function RutaProtegida({role,children}) {
     const [usuario, setUsuario] = useState(obtenerSesion);
 
     useEffect(() => {
@@ -60,15 +60,18 @@ function RutaAdmin() {
         };
     }, []);
 
-    if (usuario?.role !== 'Administrador') {
+    if (usuario?.role !== role) {
         return <Navigate to="/" replace />;
     }
 
-    return <Admin />;
+    return children;
 }
 
 
 function App() {
+    const [ready,setReady]=useState(false);
+    useEffect(()=>{let active=true;restaurarSesion().finally(()=>{if(active)setReady(true);});return ()=>{active=false;};},[]);
+    if(!ready)return <main className="container my-5">Cargando PixelByte...</main>;
     return (
         <>
             <Navbar />
@@ -88,8 +91,8 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/registro" element={<Registro />} />
 
-                <Route path="/admin" element={<RutaAdmin />} />
-                <Route path="/vendedor" element={obtenerSesion()?.role === "Vendedor" ? <Vendedor /> : <Navigate to="/" replace />} />
+                <Route path="/admin" element={<RutaProtegida role="Administrador"><Admin /></RutaProtegida>} />
+                <Route path="/vendedor" element={<RutaProtegida role="Vendedor"><Vendedor /></RutaProtegida>} />
 
             </Routes>
             <Footer />

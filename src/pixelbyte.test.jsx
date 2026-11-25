@@ -1,17 +1,19 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { validarRun, validarCampoRegistro, validarRegistro } from './services/validacionesRegistro.js';
-import { getProducts, guardarProductos, featuredProducts } from './services/productos.js';
+import { getProducts, haciaApi, desdeApi, featuredProducts } from './services/productos.js';
 import { obtenerCarrito, agregarAlCarrito, cambiarCantidad, eliminarDelCarrito, vaciarCarrito } from './services/carrito.js';
-import { inicializarUsuarios, obtenerUsuarios } from './services/usuarios.js';
-import { guardarSesion } from './services/sesion.js';
+import { autenticar, salir } from './services/api.js';
 import Navbar from './components/Navbar.jsx';
 import Productos from './components/Productos.jsx';
 import Checkout from './components/Checkout.jsx';
 
+const mockFetch=(fn)=>vi.stubGlobal('fetch',vi.fn(async (url,opts)=>{const data=await fn(url,opts);return {ok:true,status:200,text:async()=>JSON.stringify(data)};}));
+const demoUser=role=>({id:'u1',email:'test@gmail.com',nombre:'Prueba',role});
+async function session(role){mockFetch(()=>({accessToken:'test-token',usuario:demoUser(role)}));await autenticar('login',{});}
 beforeEach(() => { localStorage.clear(); });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(async () => { cleanup();mockFetch(()=>null);await salir();vi.unstubAllGlobals();vi.restoreAllMocks(); });
 
 describe('PixelByte - pruebas unitarias frontend (Vitest)', () => {
     it('01. RUN: acepta un dígito verificador correcto', () => {
@@ -38,14 +40,12 @@ describe('PixelByte - pruebas unitarias frontend (Vitest)', () => {
         expect(errores.comuna).toBeTruthy();
         expect(errores.direccion).toBeTruthy();
     });
-    it('07. Productos: carga el catálogo inicial cuando no hay datos guardados', () => {
-        expect(getProducts()).toHaveLength(featuredProducts.length);
-        expect(localStorage.getItem('pixelbyte_products')).not.toBeNull();
+    it('07. Productos: GET adapta los campos de la API', async () => {
+        mockFetch(()=>featuredProducts.map(p=>haciaApi({...p,stock:20,category:'Componentes'})));
+        const lista=await getProducts();expect(lista).toHaveLength(featuredProducts.length);expect(lista[0].name).toBe(featuredProducts[0].name);expect(localStorage.getItem('pixelbyte_products')).toBeNull();
     });
-    it('08. Productos: respeta los cambios del catálogo guardado', () => {
-        const lista = [{ id:'X1', name:'Producto nuevo', price:0, img:'', stock:2 }];
-        guardarProductos(lista);
-        expect(getProducts()).toEqual(lista);
+    it('08. Productos: transforma el DTO de ida y vuelta', () => {
+        const p={id:'X1',name:'Producto nuevo',price:0,img:'',stock:2,category:'Otros',desc:'',stockCritico:null};expect(desdeApi(haciaApi(p))).toMatchObject(p);
     });
     it('09. Carrito: agrega unidades y notifica cambios a la UI', () => {
         const escuchar = vi.fn();
@@ -67,17 +67,17 @@ describe('PixelByte - pruebas unitarias frontend (Vitest)', () => {
         vaciarCarrito();
         expect(obtenerCarrito()).toEqual([]);
     });
-    it('11. Navbar: muestra Admin únicamente para el rol autorizado', () => {
-        inicializarUsuarios();
-        guardarSesion(obtenerUsuarios().find(u=>u.role==='Administrador'));
+    it('11. Navbar: muestra Admin únicamente para el rol autorizado', async () => {
+        await session('Administrador');
         const vista = render(<MemoryRouter><Navbar /></MemoryRouter>);
         expect(screen.getByRole('link', {name:/Admin/})).toBeTruthy();
         vista.unmount();
-        guardarSesion(obtenerUsuarios().find(u=>u.role==='Cliente'));
+        await session('Cliente');
         render(<MemoryRouter><Navbar /></MemoryRouter>);
         expect(screen.queryByRole('link', {name:/Admin/})).toBeNull();
     });
     it('12. Productos: renderiza tarjetas y permite agregar con un clic', async () => {
+        mockFetch(()=>featuredProducts.map(p=>haciaApi({...p,stock:20,category:'Componentes'})));
         render(<MemoryRouter><Productos /></MemoryRouter>);
         expect(await screen.findByText('Tarjeta de Video RTX 4070')).toBeTruthy();
         fireEvent.click(screen.getAllByRole('button', {name:/Añadir al carrito/i})[0]);
@@ -98,7 +98,9 @@ describe('PixelByte - pruebas unitarias frontend (Vitest)', () => {
         expect(obtenerCarrito()).toHaveLength(1);
         expect(localStorage.getItem('pixelbyte_orders')).toBeNull();
     });
-    it('14. Checkout: aprobación genera orden con detalle y vacía carrito', () => {
+    it('14. Checkout: aprobación genera orden con detalle y vacía carrito', async () => {
+        await session('Cliente');
+        mockFetch((url,opts)=>{expect(url).toContain('/ordenes');expect(opts.headers.Authorization).toBe('Bearer test-token');const body=JSON.parse(opts.body);expect(body.items[0].id).toBe('PROD-01');return {id:'PB-TEST',fecha:'2026-11-24',cliente:body.cliente,items:[{...featuredProducts[0],quantity:1}],total:650000};});
         agregarAlCarrito(featuredProducts[0]);
         render(<MemoryRouter><Checkout /></MemoryRouter>);
         fireEvent.change(screen.getByLabelText('Nombre completo'), {target:{value:'Comprador de prueba'}});
@@ -107,9 +109,8 @@ describe('PixelByte - pruebas unitarias frontend (Vitest)', () => {
         fireEvent.change(screen.getByLabelText('Región'), {target:{value:'Región Metropolitana de Santiago'}});
         fireEvent.change(screen.getByLabelText('Comuna'), {target:{value:'La Florida'}});
         fireEvent.click(screen.getByRole('button', {name:'Confirmar pago de prueba'}));
-        expect(screen.getByRole('status').textContent).toContain('Compra de prueba aprobada');
-        const ordenes = JSON.parse(localStorage.getItem('pixelbyte_orders'));
-        expect(ordenes[0].items[0].id).toBe('PROD-01');
+        await waitFor(()=>expect(screen.getByRole('status').textContent).toContain('Compra de prueba aprobada'));
+        expect(localStorage.getItem('pixelbyte_orders')).toBeNull();
         expect(obtenerCarrito()).toEqual([]);
     });
 });

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { obtenerCarrito, vaciarCarrito } from '../services/carrito.js';
 import { obtenerSesion } from '../services/sesion.js';
-import { obtenerUsuarios } from '../services/usuarios.js';
+import { api } from '../services/api.js';
 
 const regiones = {
     'Región Metropolitana de Santiago': ['Santiago', 'Providencia', 'Las Condes', 'La Florida', 'Maipú', 'Puente Alto', 'Ñuñoa'],
@@ -17,9 +17,10 @@ function Checkout() {
     const [orden, setOrden] = useState(null);
     const [simulacion, setSimulacion] = useState('aprobado');
     const [error, setError] = useState('');
+    const [busy,setBusy]=useState(false);
     const [datos, setDatos] = useState(() => {
         const sesion = obtenerSesion();
-        const persona = obtenerUsuarios().find(u => u.email === sesion?.email);
+        const persona = sesion;
         return { nombre: [persona?.nombre || sesion?.nombre, persona?.apellidos].filter(Boolean).join(' '),
             email: persona?.email || sesion?.email || '', region: persona?.region || '',
             comuna: persona?.comuna || '', direccion: persona?.direccion || '', indicaciones: '', envio: 'estandar' };
@@ -30,20 +31,19 @@ function Checkout() {
         setDatos(anterior => ({ ...anterior, [name]: value, ...(name === 'region' ? { comuna: '' } : {}) }));
         setError('');
     }
-    function procesarPago(evento) {
+    async function procesarPago(evento) {
         evento.preventDefault();
+        if(busy)return;
         if (!datos.nombre.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.email) || !datos.direccion.trim() ||
             !regiones[datos.region]?.includes(datos.comuna)) {
             setError('Completa correctamente los datos de contacto, región, comuna y dirección de entrega.');
             return;
         }
         if (simulacion === 'rechazado') { setResultado('rechazado'); return; }
-        const nuevaOrden = { id: `PB-${Date.now()}`, fecha: new Date().toLocaleString('es-CL'),
-            cliente: { ...datos }, items: carrito.map(p => ({ ...p })), total, estado: 'Aprobado (simulación)' };
-        let ordenes = [];
-        try { ordenes = JSON.parse(localStorage.getItem('pixelbyte_orders') || '[]'); } catch { /* datos anteriores dañados */ }
-        localStorage.setItem('pixelbyte_orders', JSON.stringify([...ordenes, nuevaOrden]));
-        setOrden(nuevaOrden); vaciarCarrito(); setResultado('aprobado');
+        if(!obtenerSesion()){setError('Inicia sesión antes de confirmar la compra.');return;}
+        setBusy(true);
+        try {const nuevaOrden=await api('/ordenes',{method:'POST',body:{cliente:datos,items:carrito.map(({id,quantity})=>({id,quantity}))},auth:true});setOrden(nuevaOrden);vaciarCarrito();setResultado('aprobado');}catch(e){setError(e.message);}finally{setBusy(false);}
+
     }
     if (resultado === 'aprobado' && orden) {
         return <main className="container my-5 checkout-page">
@@ -76,7 +76,7 @@ function Checkout() {
                     <div className="mb-3"><label className="form-label" htmlFor="checkout-resultado">Resultado del pago de prueba</label><select id="checkout-resultado" className="form-select" value={simulacion} onChange={e=>{setSimulacion(e.target.value);setResultado('');}}><option value="aprobado">Pago aprobado</option><option value="rechazado">Pago rechazado</option></select></div>
                     {error && <div className="alert alert-danger" role="alert">{error}</div>}
                     {resultado === 'rechazado' && <div className="alert alert-danger" role="alert"><strong>Pago rechazado.</strong> La simulación no generó una orden ni vació el carrito. Puedes volver a intentar.</div>}
-                    <button type="submit" className="btn btn-primary">Confirmar pago de prueba</button>
+                    <button type="submit" disabled={busy} className="btn btn-primary">{busy?'Procesando...':'Confirmar pago de prueba'}</button>
                 </form>
             </section></div>
             <div className="col-lg-5"><aside className="admin-section"><h2>Resumen de compra</h2>

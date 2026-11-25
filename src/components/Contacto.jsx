@@ -1,3 +1,4 @@
+import {api} from '../services/api.js';
 import { useState } from 'react';
 
 function Contacto() {
@@ -45,7 +46,7 @@ function Contacto() {
         }));
     }
 
-    function enviar(evento) {
+    async function enviar(evento) {
         evento.preventDefault();
 
         const erroresActuales = validar(datos);
@@ -53,21 +54,7 @@ function Contacto() {
 
         if (Object.keys(erroresActuales).length > 0) return;
 
-        const mensajes = JSON.parse(
-            localStorage.getItem('pixelbyte_messages') || '[]'
-        );
-
-        mensajes.push({
-            id: 'MSG-' + Date.now(),
-            nombre: datos.nombre.trim(),
-            email: datos.email.trim().toLowerCase(),
-            motivo: datos.motivo.trim(),
-            fecha: new Date().toLocaleString('es-CL'),
-            leido: false
-        });
-
-        localStorage.setItem('pixelbyte_messages', JSON.stringify(mensajes));
-
+        try {await api('/mensajes',{method:'POST',body:datos});}catch(e){setErrores({general:e.message});return;}
         setEnviado(true);
         setDatos({ nombre: '', email: '', motivo: '' });
         setErrores({});
@@ -85,6 +72,7 @@ function Contacto() {
                 )}
 
                 <form onSubmit={enviar} noValidate>
+                    {errores.general&&<div className="alert alert-danger">{errores.general}</div>}
                     {[
                         { name: 'nombre', label: 'Nombre', type: 'text' },
                         { name: 'email', label: 'Correo electrónico', type: 'email' }

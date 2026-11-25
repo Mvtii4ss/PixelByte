@@ -40,10 +40,11 @@ export function obtenerPrecioFinal(producto) {
 function Productos({ vista = 'productos' }){
     const [productos, setProductos] = useState([]);
     const [mensaje, setMensaje] = useState('');
+    const [error,setError]=useState('');
     const [categoria, setCategoria] = useState('Todas');
 
     useEffect(() => {
-        setProductos(getProducts());
+        getProducts().then(setProductos).catch(e=>setError(e.message));
     }, []);
 
     const categorias = [
@@ -108,6 +109,7 @@ function Productos({ vista = 'productos' }){
                 </div>
             )}
 
+            {error && <div className="alert alert-danger" role="alert">{error}</div>}
             {mensaje && (
                 <div className="alert alert-success" role="status">
                     {mensaje}
@@ -154,7 +156,7 @@ function Productos({ vista = 'productos' }){
 
                         <button
                             className="btn btn-primary"
-                            onClick={() => handleAgregar(producto)}
+                            onClick={() => handleAgregar(producto)} disabled={producto.stock===0}
                         >
                             Añadir al carrito
                         </button>

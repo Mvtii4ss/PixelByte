@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProducts, guardarProductos } from '../services/productos.js';
-import { obtenerUsuarios, guardarUsuarios } from '../services/usuarios.js';
+import { getProducts, guardarProducto, eliminarProducto } from '../services/productos.js';
+import { obtenerUsuarios, guardarUsuarioApi, eliminarUsuarioApi } from '../services/usuarios.js';
 import { obtenerSesion, cerrarSesion } from '../services/sesion.js';
+import { api } from '../services/api.js';
 import { validarRegistro } from '../services/validacionesRegistro.js';
 
 const categorias = ['Tarjetas de Video', 'Periféricos', 'Audio', 'Almacenamiento', 'Componentes', 'Monitores', 'Computadores', 'Otros'];
@@ -13,22 +14,24 @@ const regiones = {
 };
 const productoVacio = { code: '', name: '', desc: '', price: '', stock: '', stockCritico: '', category: 'Tarjetas de Video', img: '' };
 const usuarioVacio = { run: '', nombre: '', apellidos: '', email: '', confirmarEmail: '', password: '', confirmarPassword: '', fechaNac: '', role: 'Cliente', region: '', comuna: '', direccion: '' };
-const leer = (clave) => { try { return JSON.parse(localStorage.getItem(clave) || '[]'); } catch { return []; } };
 const dinero = (n) => `$${Number(n || 0).toLocaleString('es-CL')}`;
 
 function Admin() {
     const navigate = useNavigate();
     const [pestana, setPestana] = useState('resumen');
-    const [productos, setProductos] = useState(getProducts);
-    const [usuarios, setUsuarios] = useState(obtenerUsuarios);
-    const [mensajes, setMensajes] = useState(() => leer('pixelbyte_messages'));
-    const [ordenes, setOrdenes] = useState(() => leer('pixelbyte_orders'));
+    const [productos, setProductos] = useState([]);
+    const [usuarios, setUsuarios] = useState([]);
+    const [mensajes, setMensajes] = useState([]);
+    const [ordenes, setOrdenes] = useState([]);
     const [formulario, setFormulario] = useState(productoVacio);
     const [editando, setEditando] = useState(null);
     const [usuarioForm, setUsuarioForm] = useState(usuarioVacio);
     const [usuarioEditando, setUsuarioEditando] = useState(null);
     const [error, setError] = useState('');
 
+    useEffect(()=>{Promise.all([getProducts(),obtenerUsuarios(),api('/mensajes',{auth:true}),api('/ordenes',{auth:true})]).then(([p,u,m,o])=>{setProductos(p);setUsuarios(u);setMensajes(m);setOrdenes(o);}).catch(e=>setError(e.message));},[]);
+    async function actualizarOrden(id,estado){try{const o=await api('/ordenes/'+encodeURIComponent(id),{method:'PUT',body:{estado},auth:true});setOrdenes(old=>old.map(x=>x.id===id?o:x));}catch(e){setError(e.message);}}
+    async function eliminarOrden(id){if(!window.confirm('¿Eliminar la orden del historial? No se repone el stock.'))return;try{await api('/ordenes/'+encodeURIComponent(id),{method:'DELETE',auth:true});setOrdenes(old=>old.filter(o=>o.id!==id));}catch(e){setError(e.message);}}
     function seleccionar(tab) { setPestana(tab); setError(''); }
     function actualizarCampo(e) { setFormulario(actual => ({ ...actual, [e.target.name]: e.target.value })); }
     function actualizarUsuario(e) {
@@ -36,71 +39,57 @@ function Admin() {
         setUsuarioForm(actual => ({ ...actual, [name]: value, ...(name === 'region' ? { comuna: '' } : {}) }));
     }
     function cancelarProducto() { setFormulario(productoVacio); setEditando(null); setError(''); }
-    function guardar(evento) {
+    async function guardar(evento) {
         evento.preventDefault();
         if (formulario.code.trim().length < 3 || !formulario.name.trim() || formulario.name.length > 100 || formulario.desc.length > 500 ||
-            formulario.price === '' || Number(formulario.price) < 0 || formulario.stock === '' || !Number.isInteger(Number(formulario.stock)) || Number(formulario.stock) < 0 ||
+            formulario.price === '' || !Number.isInteger(Number(formulario.price)) || Number(formulario.price) < 0 || formulario.stock === '' || !Number.isInteger(Number(formulario.stock)) || Number(formulario.stock) < 0 ||
             (formulario.stockCritico !== '' && (!Number.isInteger(Number(formulario.stockCritico)) || Number(formulario.stockCritico) < 0))) {
             setError('Revisa el código (mínimo 3), nombre, descripción, precio y cantidades de stock.');
             return;
         }
         const producto = {
-            ...formulario, id: editando ?? Date.now().toString(),
-            code: formulario.code.trim(), name: formulario.name.trim(), desc: formulario.desc.trim(),
+            ...formulario, id: editando ?? formulario.code.trim(),
+            code: formulario.code.trim(), name: formulario.name.trim(), desc: (formulario.desc || '').trim(),
             price: Number(formulario.price), stock: Number(formulario.stock),
             stockCritico: formulario.stockCritico === '' ? null : Number(formulario.stockCritico),
             img: formulario.img.trim() || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=400&q=80'
         };
-        const actualizados = editando === null ? [...productos, producto] : productos.map(p => String(p.id) === String(editando) ? producto : p);
-        guardarProductos(actualizados); setProductos(actualizados); cancelarProducto();
+        try {const guardado=await guardarProducto(producto,editando);setProductos(old=>editando===null?[...old,guardado]:old.map(p=>p.id===editando?guardado:p));cancelarProducto();}catch(e){setError(e.message);}
+
     }
     function editar(producto) {
         setFormulario({ ...productoVacio, ...producto, code: producto.code || producto.id, stockCritico: producto.stockCritico ?? '' });
         setEditando(producto.id); setError('');
         window.scrollTo?.({ top: 0, behavior: 'smooth' });
     }
-    function eliminar(id) {
+    async function eliminar(id) {
         if (!window.confirm('¿Eliminar este producto?')) return;
-        const actualizados = productos.filter(p => String(p.id) !== String(id));
-        guardarProductos(actualizados); setProductos(actualizados); cancelarProducto();
+        try {await eliminarProducto(id);setProductos(old=>old.filter(p=>p.id!==id));cancelarProducto();}catch(e){setError(e.message);}
+
     }
     function cancelarUsuario() { setUsuarioForm(usuarioVacio); setUsuarioEditando(null); setError(''); }
     function editarUsuario(usuario) {
-        setUsuarioEditando(usuario.email);
+        setUsuarioEditando(usuario.id);
         setUsuarioForm({ ...usuarioVacio, ...usuario, confirmarEmail: usuario.email, password: '', confirmarPassword: '' });
         setError('');
     }
-    function guardarUsuario(e) {
+    async function guardarUsuario(e) {
         e.preventDefault();
-        const email = usuarioForm.email.trim().toLowerCase();
-        const emailDuplicado = usuarios.filter(u => u.email.toLowerCase() !== String(usuarioEditando).toLowerCase());
-        const datosValidar = { ...usuarioForm, email, confirmarEmail: usuarioForm.confirmarEmail.trim().toLowerCase() };
-        // Al editar, una contraseña en blanco conserva la existente y no obliga a volver a ingresarla.
-        const usuarioAnterior = usuarios.find(u => u.email === usuarioEditando);
-        if (usuarioEditando && !usuarioForm.password) {
-            datosValidar.password = usuarioAnterior?.password || '';
-            datosValidar.confirmarPassword = datosValidar.password;
-        }
-        const errores = validarRegistro(datosValidar, emailDuplicado);
-        if (Object.keys(errores).length) { setError(Object.values(errores)[0]); return; }
-        if (!regiones[usuarioForm.region]?.includes(usuarioForm.comuna)) { setError('Selecciona una comuna de la región indicada.'); return; }
-        if (emailDuplicado.some(u => u.run && u.run.toUpperCase() === usuarioForm.run.toUpperCase())) { setError('Este RUN ya se encuentra registrado.'); return; }
-        const nuevo = { ...datosValidar, run: usuarioForm.run.trim().toUpperCase(), nombre: usuarioForm.nombre.trim(), apellidos: usuarioForm.apellidos.trim(),
-            password: datosValidar.password, direccion: usuarioForm.direccion.trim(), role: usuarioForm.role };
-        delete nuevo.confirmarEmail; delete nuevo.confirmarPassword;
-        const actualizados = usuarioEditando ? usuarios.map(u => u.email === usuarioEditando ? nuevo : u) : [...usuarios, nuevo];
-        guardarUsuarios(actualizados); setUsuarios(actualizados); cancelarUsuario();
+        const email=usuarioForm.email.trim().toLowerCase();
+        const anteriores=usuarios.filter(u=>u.id!==usuarioEditando);
+        if(!usuarioForm.nombre.trim()||!email||email!==usuarioForm.confirmarEmail.trim().toLowerCase()){setError('Revisa nombre y correos.');return;}
+        if(!usuarioEditando){const errores=validarRegistro(usuarioForm,anteriores);if(Object.keys(errores).length){setError(Object.values(errores)[0]);return;}}
+        if(usuarioForm.password!==usuarioForm.confirmarPassword){setError('Las contraseñas no coinciden');return;}
+        const {run,nombre,apellidos,role,fechaNac,region,comuna,direccion,password}=usuarioForm;const nuevo={run,nombre,apellidos,email,role,fechaNac,region,comuna,direccion,password:password||null};
+        try {const guardado=await guardarUsuarioApi(nuevo,usuarioEditando);setUsuarios(old=>usuarioEditando?old.map(u=>u.id===usuarioEditando?guardado:u):[...old,guardado]);cancelarUsuario();}catch(e){setError(e.message);}
     }
-    function eliminarUsuario(email) {
-        if (email === obtenerSesion()?.email) { setError('No puedes eliminar tu propia cuenta mientras mantienes una sesión activa.'); return; }
-        if (!window.confirm('¿Eliminar este usuario?')) return;
-        const actualizados = usuarios.filter(u => u.email !== email);
-        guardarUsuarios(actualizados); setUsuarios(actualizados); cancelarUsuario();
+    async function eliminarUsuario(id) {
+        if(!window.confirm('¿Eliminar este usuario?'))return;
+        try {await eliminarUsuarioApi(id);setUsuarios(old=>old.filter(u=>u.id!==id));cancelarUsuario();}catch(e){setError(e.message);}
     }
-    function eliminarMensaje(id, indice) {
-        if (!window.confirm('¿Eliminar este mensaje?')) return;
-        const actualizados = mensajes.filter((m, i) => id !== undefined ? String(m.id) !== String(id) : i !== indice);
-        localStorage.setItem('pixelbyte_messages', JSON.stringify(actualizados)); setMensajes(actualizados);
+    async function eliminarMensaje(id) {
+        if(!window.confirm('¿Eliminar este mensaje?'))return;
+        try {await api('/mensajes/'+encodeURIComponent(id),{method:'DELETE',auth:true});setMensajes(old=>old.filter(m=>m.id!==id));}catch(e){setError(e.message);}
     }
     const stockBajo = productos.filter(p => p.stock != null && p.stockCritico != null && p.stock !== '' && Number(p.stock) <= Number(p.stockCritico));
     return (
@@ -112,7 +101,7 @@ function Admin() {
                         <button key={id} type="button" className={`menu-btn ${pestana === id ? 'active' : ''}`} onClick={() => seleccionar(id)}>{nombre}</button>
                     ))}
                 </nav>
-                <button type="button" className="btn btn-outline btn-logout" onClick={() => { cerrarSesion(); navigate('/'); }}>Cerrar sesión</button>
+                <button type="button" className="btn btn-outline btn-logout" onClick={async () => { try { await cerrarSesion(); navigate('/'); } catch(e) {setError(e.message);} }}>Cerrar sesión</button>
             </aside>
             <div className="admin-content">
                 {error && <div className="alert alert-danger" role="alert">{error}</div>}
@@ -138,7 +127,7 @@ function Admin() {
                                 ].map(([name,label,type,required]) => <div className="col-md-6" key={name}>
                                     <label className="form-label" htmlFor={'prod-'+name}>{label}</label>
                                     <input id={'prod-'+name} className="form-control" name={name} type={type} value={formulario[name] ?? ''}
-                                        onChange={actualizarCampo} required={required} min={type === 'number' ? 0 : undefined} step={name === 'price' ? '0.01' : type === 'number' ? '1' : undefined}
+                                        onChange={actualizarCampo} disabled={name==='code'&&editando!==null} required={required} min={type === 'number' ? 0 : undefined} step={name === 'price' ? '1' : type === 'number' ? '1' : undefined}
                                         maxLength={name === 'name' ? 100 : undefined}/>
                                 </div>)}
                                 <div className="col-md-6"><label className="form-label" htmlFor="prod-category">Categoría</label>
@@ -184,7 +173,7 @@ function Admin() {
                         <div className="table-responsive"><table className="admin-table"><thead><tr><th>RUN</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Ubicación</th><th>Acciones</th></tr></thead>
                             <tbody>{usuarios.map(u => <tr key={u.email}><td>{u.run || '—'}</td><td>{[u.nombre,u.apellidos].filter(Boolean).join(' ')}</td><td>{u.email}</td><td>{u.role}</td><td>{[u.comuna,u.region].filter(Boolean).join(', ') || '—'}</td>
                                 <td><button type="button" className="btn btn-warning btn-sm me-2" onClick={()=>editarUsuario(u)}>Editar</button>
-                                    <button type="button" className="btn btn-danger btn-sm" onClick={()=>eliminarUsuario(u.email)} disabled={u.email === obtenerSesion()?.email}>Eliminar</button></td></tr>)}</tbody></table></div>
+                                    <button type="button" className="btn btn-danger btn-sm" onClick={()=>eliminarUsuario(u.id)} disabled={u.email === obtenerSesion()?.email}>Eliminar</button></td></tr>)}</tbody></table></div>
                     </div>
                 </section>}
                 {pestana === 'mensajes' && <section className="admin-section"><h1>Mensajes recibidos ({mensajes.length})</h1>
@@ -195,10 +184,10 @@ function Admin() {
                         <button type="button" className="btn btn-danger btn-sm" onClick={()=>eliminarMensaje(m.id,i)}>Eliminar mensaje</button>
                     </div>)}</div>
                 </section>}
-                {pestana === 'ordenes' && <section className="admin-section"><h1>Órdenes simuladas ({ordenes.length})</h1>
+                {pestana === 'ordenes' && <section className="admin-section"><h1>Órdenes registradas (pago simulado) ({ordenes.length})</h1>
                     {ordenes.length === 0 && <p>Aún no hay compras aprobadas.</p>}
-                    <div className="table-responsive"><table className="admin-table"><thead><tr><th>N° orden</th><th>Cliente</th><th>Fecha</th><th>Productos</th><th>Total</th></tr></thead>
-                    <tbody>{ordenes.map(o=><tr key={o.id}><td>{o.id}</td><td>{o.cliente?.nombre || o.cliente?.email || 'Cliente'}</td><td>{o.fecha}</td><td>{o.items?.map(p=>`${p.name} × ${p.quantity}`).join(', ')}</td><td>{dinero(o.total)}</td></tr>)}</tbody></table></div>
+                    <div className="table-responsive"><table className="admin-table"><thead><tr><th>N° orden</th><th>Cliente</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody>{ordenes.map(o=><tr key={o.id}><td>{o.id}</td><td>{o.cliente?.nombre || o.cliente?.email || 'Cliente'}</td><td>{o.fecha}</td><td>{o.items?.map(p=>`${p.name} × ${p.quantity}`).join(', ')}</td><td>{dinero(o.total)}</td><td><select aria-label="Estado de orden" value={o.estado} onChange={e=>actualizarOrden(o.id,e.target.value)}>{["Aprobado (simulación)","Preparando","Enviado","Entregado"].map(s=><option key={s}>{s}</option>)}</select></td><td><button className="btn btn-danger btn-sm" onClick={()=>eliminarOrden(o.id)}>Eliminar</button></td></tr>)}</tbody></table></div>
                 </section>}
             </div>
         </main>

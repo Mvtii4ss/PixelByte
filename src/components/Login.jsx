@@ -1,13 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
-import {
-    obtenerUsuarios,
-    inicializarUsuarios
-} from '../services/usuarios.js';
-
-import { guardarSesion } from '../services/sesion.js';
+import { autenticar } from '../services/sesion.js';
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -16,39 +11,23 @@ function Login() {
 
     const navigate = useNavigate();
 
-    useEffect(() => {
-        inicializarUsuarios();
-    }, []);
-
-    function handleLogin(evento) {
-        evento.preventDefault();
-        setError('');
-
-        const correo = email.trim().toLowerCase();
-        const dominios = ['@duoc.cl', '@profesor.duoc.cl', '@gmail.com'];
-        if (!correo || correo.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo) || !dominios.some(d => correo.endsWith(d))) {
-            setError('Ingresa un correo válido @duoc.cl, @profesor.duoc.cl o @gmail.com (máx. 100 caracteres).');
-            return;
+    const googleButton=useRef(null);
+    const clientId=import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    useEffect(()=>{
+        if(!clientId)return;
+        let active=true;
+        function iniciar(){if(!active||!window.google?.accounts?.id||!googleButton.current)return;
+            window.google.accounts.id.initialize({client_id:clientId,callback:async ({credential})=>{
+                try {const u=await autenticar('google',{credential});navigate(u.role==='Administrador'?'/admin':u.role==='Vendedor'?'/vendedor':'/');}catch(e){setError(e.message);}
+            }});
+            googleButton.current.replaceChildren();window.google.accounts.id.renderButton(googleButton.current,{theme:'outline',size:'large',text:'signin_with',locale:'es'});
         }
-        if (password.length < 4 || password.length > 10) {
-            setError('La contraseña debe tener entre 4 y 10 caracteres.');
-            return;
-        }
-
-        const usuario = obtenerUsuarios().find(
-            u =>
-                u.email.toLowerCase() === correo &&
-                u.password === password
-        );
-
-        if (!usuario) {
-            setError('Correo o contraseña incorrectos.');
-            return;
-        }
-
-        guardarSesion(usuario);
-        navigate('/');
-    }
+        let script=document.getElementById('google-gis');
+        if(!script){script=document.createElement('script');script.id='google-gis';script.src='https://accounts.google.com/gsi/client';script.async=true;document.head.appendChild(script);}
+        script.addEventListener('load',iniciar);const fail=()=>setError('No se pudo cargar Google Sign-In.');script.addEventListener('error',fail);iniciar();
+        return ()=>{active=false;script.removeEventListener('load',iniciar);script.removeEventListener('error',fail);};
+    },[clientId,navigate]);
+    async function handleLogin(evento){evento.preventDefault();setError('');try{const u=await autenticar('login',{email:email.trim().toLowerCase(),password});navigate(u.role==='Administrador'?'/admin':u.role==='Vendedor'?'/vendedor':'/');}catch(e){setError(e.message);}}
 
     return (
         <main className="auth-container">
@@ -89,6 +68,8 @@ function Login() {
                         Ingresar
                     </button>
                 </form>
+                <div className="my-3 d-flex justify-content-center" ref={googleButton} />
+                {!clientId && <p className="small text-secondary">Google: configura VITE_GOOGLE_CLIENT_ID para habilitar el acceso.</p>}
                 <div className="auth-footer">
                     <p>
                         ¿No tienes cuenta? <Link to="/registro">Regístrate</Link>

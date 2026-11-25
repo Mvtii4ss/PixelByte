@@ -1,3 +1,4 @@
+import { api } from './api.js';
 export const featuredProducts = [
     { id: 'PROD-01', name: 'Tarjeta de Video RTX 4070', price: 650000, img: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=400&q=80' },
     { id: 'PROD-02', name: 'Teclado Mecánico RGB', price: 45000, img: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=400&q=80' },
@@ -12,18 +13,9 @@ export const featuredProducts = [
     { id: 'PROD-11', name: 'Notebook Gamer RTX 4060 15.6"', price: 980000, img: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=400&q=80' }
 ];
 
-export function guardarProductos(productos){
-    localStorage.setItem('pixelbyte_products', JSON.stringify(productos));
-}
-
-export function getProducts(){
-    const stored = localStorage.getItem('pixelbyte_products');
-
-    if (stored === null){
-        guardarProductos(featuredProducts);
-        return featuredProducts;
-    }
-
-    return JSON.parse(stored);
-
-}
+export const desdeApi = p => ({id:p.id,code:p.id,name:p.nombre,desc:p.descripcion||'',price:p.precio,stock:p.stock,stockCritico:p.stockCritico,category:p.categoria||'Otros',img:p.imagenUrl||''});
+export const haciaApi = p => ({id:p.id,nombre:p.name,descripcion:p.desc||'',precio:Number(p.price),stock:Number(p.stock),stockCritico:p.stockCritico==null?null:Number(p.stockCritico),categoria:p.category,imagenUrl:p.img});
+export async function getProducts(){return (await api('/productos')).map(desdeApi);}
+export async function getProduct(id){return desdeApi(await api('/productos/'+encodeURIComponent(id)));}
+export async function guardarProducto(p,editando){return desdeApi(await api('/productos'+(editando?'/'+encodeURIComponent(editando):''),{method:editando?'PUT':'POST',body:haciaApi(p),auth:true}));}
+export async function eliminarProducto(id){return api('/productos/'+encodeURIComponent(id),{method:'DELETE',auth:true});}

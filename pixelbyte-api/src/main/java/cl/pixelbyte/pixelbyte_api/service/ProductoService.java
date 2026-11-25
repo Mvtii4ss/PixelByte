@@ -5,6 +5,7 @@ import cl.pixelbyte.pixelbyte_api.model.Producto;
 import cl.pixelbyte.pixelbyte_api.repository.ProductoRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,8 +39,9 @@ public class ProductoService {
     }
 
     // Actualizar un producto existente
+    @Transactional
     public Producto actualizar(String id, Producto datos) {
-        Producto producto = productoRepository.findById(id)
+        Producto producto = productoRepository.lockById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
 
         producto.setNombre(datos.getNombre());
@@ -54,8 +56,9 @@ public class ProductoService {
     }
 
     // Eliminar un producto
+    @Transactional
     public void eliminar(String id) {
-        if (!productoRepository.existsById(id)) {
+        if (productoRepository.lockById(id).isEmpty()) {
             throw new IllegalArgumentException("Producto no encontrado");
         }
 

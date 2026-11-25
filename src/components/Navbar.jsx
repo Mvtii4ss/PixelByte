@@ -69,9 +69,9 @@ function Navbar() {
             </nav>
 
             <div className="header-actions">
-                <NavLink to="/carrito" className="cart-btn">
+                {usuario?.role!=='Vendedor' && <NavLink to="/carrito" className="cart-btn">
                     Carrito ({cantidad})
-                </NavLink>
+                </NavLink>}
 
                 {usuario ? (
                     <div className="d-flex align-items-center gap-3">
@@ -92,7 +92,7 @@ function Navbar() {
                         )}              
                         <button
                             className="btn btn-outline"
-                            onClick={cerrarSesion}
+                            onClick={()=>cerrarSesion().catch(e=>window.alert('No se pudo cerrar la sesión del servidor: '+e.message))}
                             > Salir
                         </button>
                     </div>
